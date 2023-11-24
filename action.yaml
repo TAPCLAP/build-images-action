@@ -1,0 +1,50 @@
+name: 'images'
+description: 'Build container images'
+inputs:
+  build-opts: 
+    description: 'build options in YAML format (see README.md)'
+    required: true
+  registry: 
+    description: 'registry'
+    required: true
+  registry-user: 
+    description: "registry's user"
+    required: true
+  registry-password: 
+    description: "registry's password"
+    required: true
+  tag:
+    description: 'image tag'
+    required: true
+  operation:
+    description: '<push|build|build-and-push>'
+    required: true
+outputs:
+  copy-files:
+    description: 'copy files'
+    value: ${{ steps.images.outputs.copy-files }}
+  build-opts:
+    description: 'build opts'
+    value: ${{ steps.images.outputs.build-opts }}
+  pushed-images:
+    description: 'pushed images'
+    value: ${{ steps.images.outputs.pushed-images }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Login to registry
+      # nosemgrep
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-user }}
+        password: ${{ inputs.registry-password }}
+    - name: images
+      uses: orangeappsru/build-images-action/js-action@main
+      id: images
+      with:
+        build-opts: ${{ inputs.build-opts }}
+        registry: ${{ inputs.registry }}
+        tag: ${{ inputs.tag }}
+        operation: ${{ inputs.operation }}

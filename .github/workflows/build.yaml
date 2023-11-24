@@ -1,0 +1,46 @@
+name: build
+concurrency:
+  group: build
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - js-action/src/**/*
+      - js-action/package*.json
+      - js-action/*.js
+
+permissions:
+  contents: write
+
+env:
+  AUTHOR_EMAIL: admin+github-actions@tapclap.com
+  AUTHOR_NAME: 'Github Actions'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: 20
+
+      - name: node modules
+        working-directory: ./js-action
+        run: npm ci
+
+      - name: build
+        working-directory: ./js-action
+        run: npm run build
+
+      - name: commit builded action
+        run: |
+          if git status | grep 'js-action/dist/' -q;
+          then
+            git config --global user.email "${AUTHOR_EMAIL}"
+            git config --global user.name "${AUTHOR_NAME}"
+            git add ./js-action/dist
+            git commit -m "builded action"
+            git push origin ${{ github.ref }}:${{ github.ref }}   
+          fi

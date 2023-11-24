@@ -1,0 +1,26 @@
+name: 'images'
+description: 'Build container images'
+inputs:
+  build-opts: 
+    description: 'build options in YAML format (see README.md)'
+    required: true
+  registry: 
+    description: 'registry'
+    required: true
+  tag:
+    description: 'image tag'
+    required: true
+  operation:
+    description: '<push|build|build-and-push>'
+    required: true
+outputs:
+  copy-files:
+    description: 'copy files'
+  build-opts:
+    description: 'build opts'
+  pushed-images:
+    description: 'pushed images'
+
+runs:
+  using: 'node20'
+  main: 'dist/main.js'
