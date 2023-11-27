@@ -70,7 +70,8 @@ async function main() {
     if (operation == 'push' || operation == 'build-and-push') {
       let images = [];
 
-      // Сначала выполняем prePush для временных тегов, это нужно чтобы затем одновременно запушить все теги (чтобы слои уже были в registry)
+      // Сначала выполняем prePush для временных тегов, это нужно чтобы затем как можно быстрее и параллельно запушить итоговые теги (слои уже будут в registry и это пройдет быстрее). Это полезно для argocd-image-updater и flux image reflector, это повысит вероятность, что новый тег будет обнаружен в образах за один проход
+
       let prePushImages = [];
       for (const image in buildOpts) {
         const imageTag        = `${registry}/${repoName}/${image}:${tag}`;
