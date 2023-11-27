@@ -32,29 +32,34 @@ async function main() {
       let copyFiles = [];
       createDir('copy-files');
 
-      for (const image in buildOpts) {
+      for (const image of buildOpts) {
 
-        const imageTag = `${registry}/${repoName}/${image}:${tag}`;
+        const imageTag = `${registry}/${repoName}/${image.name}:${tag}`;
         console.log(`Build image: ${imageTag}`);
 
         let args = '';
-        if (buildOpts[image] && 'args' in buildOpts[image]) {
-          args = buildOpts[image].args.reduce((a,v) => {
+        if ('args' in image) {
+          args = image.args.reduce((a,v) => {
             return a + ' --build-arg ' + v.name + '=' + "'" + v.value + "'";
           }, '');
         }
 
+        let target = '';
+        if ('target' in image) {
+          target = `--target ${image.target}`;
+        }
+
         // build image
-        runCommand(`docker build --file ./docker/${image}/Dockerfile ${args} --tag ${imageTag} .`);
+        runCommand(`docker build --file ./docker/${image.name}/Dockerfile ${args} --tag ${imageTag} ${target} .`);
 
         // Copy files
-        if (buildOpts[image] && 'copy-files' in buildOpts[image]) {
-          console.log(`Copy files from ${image} (${imageTag})`);
+        if ('copy-files' in image) {
+          console.log(`Copy files from ${image.name} (${imageTag})`);
           const containerName = `copy-files-${generateRandomString(8)}`;
 
           runCommand(`docker run --name ${containerName} -d --entrypoint /bin/sleep ${imageTag} 30`);
           
-          for(const file of buildOpts[image]['copy-files']) {
+          for(const file of image['copy-files']) {
             const toFile = path.basename(file);
             runCommand(`docker cp ${containerName}:${file} ./copy-files/${toFile}`);
             copyFiles.push(`./copy-files/${toFile}`);
@@ -73,17 +78,17 @@ async function main() {
       // Сначала выполняем prePush для временных тегов, это нужно чтобы затем как можно быстрее и параллельно запушить итоговые теги (слои уже будут в registry и это пройдет быстрее). Это полезно для argocd-image-updater и flux image reflector, это повысит вероятность, что новый тег будет обнаружен в образах за один проход
 
       let prePushImages = [];
-      for (const image in buildOpts) {
-        const imageTag        = `${registry}/${repoName}/${image}:${tag}`;
+      for (const image of buildOpts) {
+        const imageTag        = `${registry}/${repoName}/${image.name}:${tag}`;
         const prePushTag      = `0000001-${generateRandomString(8)}`;
-        const imagePrePushTag = `${registry}/${repoName}/${image}:${prePushTag}`;
+        const imagePrePushTag = `${registry}/${repoName}/${image.name}:${prePushTag}`;
 
         runCommand(`docker tag ${imageTag} ${imagePrePushTag}`);
         runCommand(`docker push ${imagePrePushTag}`);
         images.push(imageTag);
         prePushImages.push({
           registry: `https://${registry}`,
-          repo: `${repoName}/${image}`,
+          repo: `${repoName}/${image.name}`,
           tag: prePushTag,
         })
       }

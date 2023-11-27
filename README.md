@@ -31,13 +31,13 @@ Dockerfile'ы должны находится в одноименных папк
     tag: ${{ steps.set-tags.outputs.tag }}
     operation: build-and-push
     build-opts: |
-      server:
+      - name: sever
         args:
           - name: GITHUB_USER
             value: ${{ github.repository_owner }}
           - name: GITHUB_TOKEN
             value: ${{ secrets.COMMON_TOKEN }}
-      nginx: {}
+      - name: nginx
 ```
 
 ### Разделение шагов сборки и пуша в registry и копирование файлов из образов
@@ -61,14 +61,14 @@ Dockerfile'ы должны находится в одноименных папк
     tag: ${{ steps.set-tags.outputs.tag }}
     operation: build
     build-opts: |
-      server:
+      - name: server
         copy-files: ['/app/junut.xml']
         args:
           - name: GITHUB_USER
             value: ${{ github.repository_owner }}
           - name: GITHUB_TOKEN
             value: ${{ secrets.COMMON_TOKEN }}
-      nginx-server: {}
+      - name: nginx-server
 
 - name: check copy files
   run: |
@@ -110,7 +110,8 @@ registry, указывать без протокола (например `exampl
 ### `build-opts`
 Принимает структуру данных в yaml формате следующего вида:
 ```yaml
-<image1>:
+- name: <image1>
+  target: t1
   args:
     - name: arg1
       value: val2
@@ -120,7 +121,8 @@ registry, указывать без протокола (например `exampl
     - name: argn
       value: argn
   copy-files: ['path/to/file1', 'path/to/file2', ..., 'path/to/filen']
-<image2>:
+- name: <image2>:
+  target: t1
   args:
     - name: arg1
       value: val2
@@ -131,15 +133,16 @@ registry, указывать без протокола (например `exampl
       value: argn
   copy-files: ['path/to/file1', 'path/to/file2', ..., 'path/to/filen']
 ...
-<imagen>: 
+- name: <imagen>
 ...
-
 ```
+Структура представляет из себя массив, где каждый элемент это образ и дополнительные параметры, которые к нему относятся.
 
-`<image1>, <image2>, ... <imagen>` - образы которые требуется собрать. Каждому образу можно передать аргументы требуемые для сборки и список файлов, которые хотели бы скопировать из образа. Оба этих поля опциональны, если не нужно собирать передавать аргументы и копировать файлы, то просто не указываем эти поля:
-```yaml
-<image1>: {}
-```
+* `name` - образ который требуется собрать. 
+
+* `args` (опционально) - список аргументов  
+* `copy-files` (опционально) - файлы которые требуется скопировать из образа после сборки  
+* `target` (опционально) - если указано то добавляется `--target target-value` в команду сборки
 
 ## Outputs 
 
