@@ -55,7 +55,7 @@ async function main() {
         }
 
         // build image
-        runCommand(`docker build --file ${file} ${args} --tag ${imageTag} ${target} .`);
+        runCommand(`docker build ${file} ${args} --tag ${imageTag} ${target} .`);
 
         // Copy files
         if ('copy-files' in image) {
