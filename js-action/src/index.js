@@ -49,8 +49,13 @@ async function main() {
           target = `--target ${image.target}`;
         }
 
+        let file = `--file ./docker/${image.name}/Dockerfile`;
+        if ('file' in image) {
+          target = `--file ${image.file}`;
+        }
+
         // build image
-        runCommand(`docker build --file ./docker/${image.name}/Dockerfile ${args} --tag ${imageTag} ${target} .`);
+        runCommand(`docker build --file ${file} ${args} --tag ${imageTag} ${target} .`);
 
         // Copy files
         if ('copy-files' in image) {
