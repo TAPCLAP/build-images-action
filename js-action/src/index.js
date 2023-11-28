@@ -51,7 +51,7 @@ async function main() {
 
         let file = `--file ./docker/${image.name}/Dockerfile`;
         if ('file' in image) {
-          target = `--file ${image.file}`;
+          file = `--file ${image.file}`;
         }
 
         // build image
