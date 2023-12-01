@@ -117,6 +117,10 @@ async function main() {
       });
 
       core.setOutput('pushed-images', JSON.stringify(images));
+      await core.summary
+        .addHeading('Built images')
+        .addCodeBlock(JSON.stringify(images, null, 2), "json")
+        .write()
     }
     
 
