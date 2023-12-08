@@ -117,6 +117,26 @@ Dockerfile'ы должны находится в одноименных папк
         target: migrations
 ```
 
+### Если нужно запустить собранный контенйер после билда
+Action возвращает output `built-images`, который можно использовать для запуска только что собранных контейнеров:
+```yaml
+      - uses: orangeappsru/build-images-action@main
+        id: build-images
+        with:
+          registry: ${{ vars.REGISTRY }}
+          registry-user: ${{ secrets.REGISTRY_USER }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          tag: latest
+          operation: build
+          build-opts: |
+            - name: native-builder
+      - name: test
+        env:
+          IMAGE: ${{ fromJson(steps.build-images.outputs.built-images).native-builder }}
+        run: |
+          docker run --rm -v $(pwd):/app --workdir /app ${IMAGE} ./build.sh
+```
+
 ## Inputs
 
 ### `registry`
@@ -183,6 +203,29 @@ registry, указывать без протокола (например `exampl
 ### `pushed-images`
 
 Список запушенных в registry образов в JSON формате: `["example.com/registry/image1:tag", "example.com/registry/image2:tag", ...]`
+
+### `built-images`
+
+Собранные образы в JSON формате: `{"image1": "example.com/registry/image1:tag", "image2": "example.com/registry/image2:tag", ...}`
+Это удобно использовать если далее в пайплайне потребуется запустить контейнер из собранного образа
+```yaml
+      - uses: orangeappsru/build-images-action@main
+        id: build-images
+        with:
+          registry: ${{ vars.REGISTRY }}
+          registry-user: ${{ secrets.REGISTRY_USER }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          tag: latest
+          operation: build
+          build-opts: |
+            - name: native-builder
+      - name: test
+        env:
+          IMAGE: ${{ fromJson(steps.build-images.outputs.built-images).native-builder }}
+        run: |
+          docker run --rm -v $(pwd):/app --workdir /app ${IMAGE} ./build.sh
+```
+
 
 ### `build-opts`
 

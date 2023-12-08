@@ -29,6 +29,9 @@ outputs:
   pushed-images:
     description: 'pushed images'
     value: ${{ steps.images.outputs.pushed-images }}
+  built-images:
+    description: 'built images'
+    value: ${{ steps.images.outputs.built-images }}
 
 runs:
   using: "composite"

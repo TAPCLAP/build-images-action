@@ -30,12 +30,14 @@ async function main() {
     // Build images
     if (operation == 'build' || operation == 'build-and-push') {
       let copyFiles = [];
+      let builtImages = {};
       createDir('copy-files');
 
       for (const image of buildOpts) {
 
         const imageTag = `${registry}/${repoName}/${image.name}:${tag}`;
         console.log(`Build image: ${imageTag}`);
+        builtImages[image.name] = imageTag;
 
         let args = '';
         if ('args' in image) {
@@ -56,6 +58,7 @@ async function main() {
 
         // build image
         runCommand(`docker build ${file} ${args} --tag ${imageTag} ${target} .`);
+        
 
         // Copy files
         if ('copy-files' in image) {
@@ -73,12 +76,13 @@ async function main() {
         }
       }
 
+      core.setOutput('built-images', JSON.stringify(builtImages));
       core.setOutput('copy-files', JSON.stringify(copyFiles));
     }
 
     // push
     if (operation == 'push' || operation == 'build-and-push') {
-      let images = [];
+      let pushImages = [];
 
       // Сначала выполняем prePush для временных тегов, это нужно чтобы затем как можно быстрее и параллельно запушить итоговые теги (слои уже будут в registry и это пройдет быстрее). Это полезно для argocd-image-updater и flux image reflector, это повысит вероятность, что новый тег будет обнаружен в образах за один проход
 
@@ -90,7 +94,7 @@ async function main() {
 
         runCommand(`docker tag ${imageTag} ${imagePrePushTag}`);
         runCommand(`docker push ${imagePrePushTag}`);
-        images.push(imageTag);
+        pushImages.push(imageTag);
         prePushImages.push({
           registry: `https://${registry}`,
           repo: `${repoName}/${image.name}`,
@@ -102,7 +106,7 @@ async function main() {
       // а здесь лишь запуск тредов
       const workerScript = __filename;
     
-      images.forEach(image => {
+      pushImages.forEach(image => {
         const worker = new Worker(workerScript, { workerData: { image } });
         worker.on('error', (error) => {
           console.error(`Worker for image ${image} encountered an error: ${error.message}`);
@@ -116,11 +120,11 @@ async function main() {
         });
       });
 
-      core.setOutput('pushed-images', JSON.stringify(images));
-      console.log('\x1b[34m%s\x1b[0m',`built images: ${JSON.stringify(images, null, 2)}`);
+      core.setOutput('pushed-images', JSON.stringify(pushImages));
+      console.log('\x1b[34m%s\x1b[0m',`built images: ${JSON.stringify(pushImages, null, 2)}`);
       await core.summary
         .addHeading('Built images')
-        .addCodeBlock(JSON.stringify(images, null, 2), "json")
+        .addCodeBlock(JSON.stringify(pushImages, null, 2), "json")
         .write()
     }
     
