@@ -1,0 +1,46 @@
+name: build-image-metadata
+concurrency:
+  group: build-image-metadata
+on:
+  push:
+    branches:
+      - image-metadata
+    paths:
+      - image-metadata/src/**/*
+      - image-metadata/package*.json
+      - image-metadata/*.js
+
+permissions:
+  contents: write
+
+env:
+  AUTHOR_EMAIL: admin+github-actions@tapclap.com
+  AUTHOR_NAME: 'Github Actions'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: 20
+
+      - name: node modules
+        working-directory: ./image-metadata
+        run: npm ci
+
+      - name: build
+        working-directory: ./image-metadata
+        run: npm run build
+
+      - name: commit builded action
+        run: |
+          if git status | grep 'image-metadata/dist/' -q;
+          then
+            git config --global user.email "${AUTHOR_EMAIL}"
+            git config --global user.name "${AUTHOR_NAME}"
+            git add ./image-metadata/dist
+            git commit -m "built action image-metadata"
+            git push origin ${{ github.ref }}:${{ github.ref }}   
+          fi

@@ -1,0 +1,28 @@
+name: 'copy tag'
+description: 'add tag for exist image:tag'
+inputs:
+  registry: 
+    description: 'registry'
+    required: true
+  registry-user: 
+    description: 'registry'
+    required: true
+  registry-password: 
+    description: 'registry'
+    required: true
+  tag:
+    description: 'tag'
+    required: true
+  images:
+    description: 'list images in Yaml format'
+    required: true
+outputs:
+  metadata:
+    description: 'metadata'
+  labels:
+    description: 'labels'
+
+
+runs:
+  using: 'node20'
+  main: 'dist/main.js'
