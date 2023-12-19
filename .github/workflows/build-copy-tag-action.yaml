@@ -1,14 +1,14 @@
-name: build
+name: build-copy-tag-action
 concurrency:
-  group: build
+  group: build-copy-tag-action
 on:
   push:
     branches:
       - main
     paths:
-      - js-action/src/**/*
-      - js-action/package*.json
-      - js-action/*.js
+      - copy-tag/src/**/*
+      - copy-tag/package*.json
+      - copy-tag/*.js
 
 permissions:
   contents: write
@@ -27,20 +27,20 @@ jobs:
           node-version: 20
 
       - name: node modules
-        working-directory: ./js-action
+        working-directory: ./copy-tag
         run: npm ci
 
       - name: build
-        working-directory: ./js-action
+        working-directory: ./copy-tag
         run: npm run build
 
       - name: commit builded action
         run: |
-          if git status | grep 'js-action/dist/' -q;
+          if git status | grep 'copy-tag/dist/' -q;
           then
             git config --global user.email "${AUTHOR_EMAIL}"
             git config --global user.name "${AUTHOR_NAME}"
-            git add ./js-action/dist
-            git commit -m "builded action"
+            git add ./copy-tag/dist
+            git commit -m "built action"
             git push origin ${{ github.ref }}:${{ github.ref }}   
           fi
