@@ -34,8 +34,14 @@ async function main() {
       createDir('copy-files');
 
       for (const image of buildOpts) {
-
-        const imageTag = `${registry}/${repoName}/${image.name}:${tag}`;
+        if (!image.hasOwnProperty('operation')) {
+          image['operation'] = 'build-and-push';
+        }
+        let resultTag = tag;
+        if (image.operation === 'build') {
+          resultTag = `0000001-${generateRandomString(8)}`;
+        }
+        const imageTag = `${registry}/${repoName}/${image.name}:${resultTag}`;
         console.log(`Build image: ${imageTag}`);
         builtImages[image.name] = imageTag;
 
@@ -88,6 +94,14 @@ async function main() {
 
       let prePushImages = [];
       for (const image of buildOpts) {
+        if (!image.hasOwnProperty('operation')) {
+          image['operation'] = 'build-and-push';
+        }
+        console.log(`${image.name} operation ${image.operation}`);
+        if (image.operation !== 'push' && image.operation !== 'build-and-push') {
+          continue;
+        }
+
         const imageTag        = `${registry}/${repoName}/${image.name}:${tag}`;
         const prePushTag      = `0000001-${generateRandomString(8)}`;
         const imagePrePushTag = `${registry}/${repoName}/${image.name}:${prePushTag}`;
