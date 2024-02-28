@@ -120,23 +120,73 @@ Dockerfile'ы должны находится в одноименных папк
 ### Если нужно запустить собранный контенйер после билда
 Action возвращает output `built-images`, который можно использовать для запуска только что собранных контейнеров:
 ```yaml
-      - uses: orangeappsru/build-images-action@main
-        id: build-images
-        with:
-          registry: ${{ vars.REGISTRY }}
-          registry-user: ${{ secrets.REGISTRY_USER }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          tag: latest
-          operation: build
-          build-opts: |
-            - name: native-builder
-      - name: test
-        env:
-          IMAGE: ${{ fromJson(steps.build-images.outputs.built-images).native-builder }}
-        run: |
-          docker run --rm -v $(pwd):/app --workdir /app ${IMAGE} ./build.sh
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: latest
+    operation: build
+    build-opts: |
+      - name: native-builder
+- name: test
+  env:
+    IMAGE: ${{ fromJson(steps.build-images.outputs.built-images).native-builder }}
+  run: |
+    docker run --rm -v $(pwd):/app --workdir /app ${IMAGE} ./build.sh
 ```
 
+### Прокидываем секреты
+Если хотим использовать функцию https://docs.docker.com/build/building/secrets/, то нужно передать поле `secrets`
+
+docker secrets поддерживает возможность передавать секреты через енвы, поэтому  предусмотрено поле `envs`, которое позволяет создать перменные среды перед запуском `docker build` чтобы прокинуть их в секреты `type=env`
+```yaml
+- uses: orangeappsru/build-images-action@main
+  name: build native
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: ${{ inputs.area }}-${{ github.ref_name }}
+    operation: build
+    build-opts: |
+      - name: android
+        copy-files: ['/output']
+        envs:
+        - name: ANDROID_KEYSTORE_PASSWORD
+          value: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        - name: ANDROID_KEYSTORE_ALIAS
+          value: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+        secrets:
+        - id=ANDROID_KEYSTORE,type=file,src=./android.keystore
+        - id=ANDROID_KEYSTORE_PASSWORD,type=env,env=ANDROID_KEYSTORE_PASSWORD
+        - id=ANDROID_KEYSTORE_ALIAS,type=env,env=ANDROID_KEYSTORE_ALIAS
+        - id=SUPPLY_JSON_KEY,type=file,src=./google_play_key.json
+        args:
+        - name: AREA
+          value: ${{ inputs.area }}
+        - name: VERSION_NAME
+          value: ${{ github.ref_name }}
+        - name: BACKEND_URL
+          value: ${{ inputs.backend-url }}
+```
+В примере мы прокидываем секреты `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEYSTORE_ALIAS`, `SUPPLY_JSON_KEY`, где `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEYSTORE_ALIAS` пробрасываются через переменные среды, а  `ANDROID_KEYSTORE`, `SUPPLY_JSON_KEY` пробрасываются через файлы. 
+В Dockerfile использовать секреты можно таким образом
+
+```dockerfile
+RUN --mount=type=secret,id=ANDROID_KEYSTORE \
+    --mount=type=secret,id=ANDROID_KEYSTORE_PASSWORD \
+    --mount=type=secret,id=ANDROID_KEYSTORE_ALIAS \
+    --mount=type=secret,id=SUPPLY_JSON_KEY \
+       export ANDROID_KEYSTORE=/run/secrets/ANDROID_KEYSTORE \
+    && export ANDROID_KEYSTORE_PASSWORD=$(cat /run/secrets/ANDROID_KEYSTORE_PASSWORD) \
+    && export ANDROID_KEYSTORE_ALIAS=$(cat /run/secrets/ANDROID_KEYSTORE_ALIAS) \
+    && export SUPPLY_JSON_KEY=/run/secrets/SUPPLY_JSON_KEY \
+    make build
+```
+Подробнее смотрите в документации по docker secrets: https://docs.docker.com/build/building/secrets/
 ## Inputs
 
 ### `registry`
@@ -169,6 +219,16 @@ registry, указывать без протокола (например `exampl
     - name: argn
       value: argn
   copy-files: ['path/to/file1', 'path/to/file2', ..., 'path/to/filen']
+  envs:
+    - name: VAR1
+      value: VAL1
+    - name: VAR2
+      value: VAL2
+  secrets:
+    - id=FILE,type=file,src=./file
+    - id=VAR1,type=env,env=VAR1
+    - id=VAR2,type=env,env=VAR2
+
 - name: <image2>:
   target: t1
   file: ./docker/<image2>/Dockerfile
@@ -181,6 +241,15 @@ registry, указывать без протокола (например `exampl
     - name: argn
       value: argn
   copy-files: ['path/to/file1', 'path/to/file2', ..., 'path/to/filen']
+  envs:
+    - name: VAR1
+      value: VAL1
+    - name: VAR2
+      value: VAL2
+  secrets:
+    - id=FILE,type=file,src=./file
+    - id=VAR1,type=env,env=VAR1
+    - id=VAR2,type=env,env=VAR2
 ...
 - name: <imagen>
 ...
@@ -193,6 +262,9 @@ registry, указывать без протокола (например `exampl
 * `copy-files` (опционально) - файлы которые требуется скопировать из образа после сборки  
 * `target` (опционально) - если указано то добавляется `--target target-value` в команду сборки
 * `file` (опционально) - если указано то в `--file` подставляется значение из этого поля
+* `envs` (опционально) - создает указанные переменные среды перед запуском сборки, полезно при использовании совместно с `secrets`
+* `secrets` (опционально) - добавляет аргументы `--secret`. Подробнее смотрите в докумнтации docker: https://docs.docker.com/build/building/secrets/
+
 
 ## Outputs 
 

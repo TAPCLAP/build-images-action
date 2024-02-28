@@ -62,8 +62,21 @@ async function main() {
           file = `--file ${image.file}`;
         }
 
+        let secrets = '';
+        if ('secrets' in image) {
+          secrets = image.secrets.reduce((s,v) => {
+            return s + ' --secret ' + '"' + v + '"';
+          }, '');
+        }
+
+        if ('envs' in image) {
+          for (const e of image.envs) {
+            console.log('\x1b[34m%s\x1b[0m',`set env: "${e.name}"`);
+            process.env[e.name] = e.value;
+          }
+        }
         // build image
-        runCommand(`docker build ${file} ${args} --tag ${imageTag} ${target} .`);
+        runCommand(`docker build ${file} ${args} ${secrets} --tag ${imageTag} ${target} .`);
         
 
         // Copy files
