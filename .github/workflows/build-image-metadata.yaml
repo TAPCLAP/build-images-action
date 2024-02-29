@@ -4,7 +4,7 @@ concurrency:
 on:
   push:
     branches:
-      - image-metadata
+      - main
     paths:
       - image-metadata/src/**/*
       - image-metadata/package*.json

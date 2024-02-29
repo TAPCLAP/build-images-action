@@ -11,7 +11,7 @@ Dockerfile'ы должны находится в одноименных папк
 ./docker/server/Dockerfile
 ./docker/nginx/Dockerfile
 ```
-Также образу `server` нужно передать аргументы `GITHUB_USER` и `GITHUB_TOKEN`. Имена езультирующих образов будут сформированы по следующему принципу: `<registry>/<repo-name>/<image-name>:<tag>`, где `<repo-name>` - имя репозитория в нижнем регистре.
+Также образу `server` нужно передать аргументы `GITHUB_USER` и `GITHUB_TOKEN`. Имена результирующих образов будут сформированы по следующему принципу: `<registry>/<repo-name>/<image-name>:<tag>`, где `<repo-name>` - имя репозитория в нижнем регистре.
 
 ```yaml
 - id: set-tags
@@ -31,7 +31,7 @@ Dockerfile'ы должны находится в одноименных папк
     tag: ${{ steps.set-tags.outputs.tag }}
     operation: build-and-push
     build-opts: |
-      - name: sever
+      - name: server
         args:
           - name: GITHUB_USER
             value: ${{ github.repository_owner }}
@@ -39,6 +39,37 @@ Dockerfile'ы должны находится в одноименных папк
             value: ${{ secrets.COMMON_TOKEN }}
       - name: nginx
 ```
+
+Если в качестве registry будет передан ghcr.io, то имена образов будут формироваться по следующему принципу: `ghcr.io/<org-name>/<repo-name>:<image-name>-<tag>`:
+```yaml
+- id: set-tags
+  run: |
+    commit_sha=${{ github.sha }}
+    commit_sha=${commit_sha:0:10}
+    time=`date +%Y%m%d%H%M`
+
+    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
+# nosemgrep
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ghcr.io
+    registry-user: ${{ github.repository_owner }}
+    registry-password: ${{ secrets.GITHUB_TOKEN }}
+    tag: ${{ steps.set-tags.outputs.tag }}
+    operation: build-and-push
+    build-opts: |
+      - name: server
+        args:
+          - name: GITHUB_USER
+            value: ${{ github.repository_owner }}
+          - name: GITHUB_TOKEN
+            value: ${{ secrets.COMMON_TOKEN }}
+      - name: nginx
+```
+Будут собраны образы:  
+1. `ghcr.io/org-name/repo-name:server-<tag>`
+1. `ghcr.io/org-name/repo-name:nginx-<tag>`
 
 ### Разделение шагов сборки и пуша в registry и копирование файлов из образов
 
@@ -187,6 +218,175 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     make build
 ```
 Подробнее смотрите в документации по docker secrets: https://docs.docker.com/build/building/secrets/
+
+### Указываем несколько платформ для билда
+указываем `platforms` для сборки всех образов
+```yaml
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: latest
+    operation: build-and-push
+    platforms: linux/amd64,linux/arm64
+    build-opts: |
+      - name: image
+```
+
+указываем `platforms` для определенного образа
+```yaml
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: build-and-push
+    operation: build
+    build-opts: |
+      - name: image1
+        platforms: linux/amd64,linux/arm64
+      - name: image2
+```
+
+###  latest тег
+Иногда хочется помимо указанного тега сделать так чтобы пушился ещё latest тег. Для этого просто добавляем параметр `latest: true`
+
+```yaml
+- id: set-tags
+  run: |
+    commit_sha=${{ github.sha }}
+    commit_sha=${commit_sha:0:10}
+    time=`date +%Y%m%d%H%M`
+
+    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
+# nosemgrep
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: ${{ steps.set-tags.outputs.tag }}
+    operation: build-and-push
+    latest: true
+    build-opts: |
+      - name: server
+        args:
+          - name: GITHUB_USER
+            value: ${{ github.repository_owner }}
+          - name: GITHUB_TOKEN
+            value: ${{ secrets.COMMON_TOKEN }}
+      - name: nginx
+```
+
+Тоже самое можно делать на уровне образа в `build-opts`
+```yaml
+- id: set-tags
+  run: |
+    commit_sha=${{ github.sha }}
+    commit_sha=${commit_sha:0:10}
+    time=`date +%Y%m%d%H%M`
+
+    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
+# nosemgrep
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: ${{ steps.set-tags.outputs.tag }}
+    operation: build-and-push
+    build-opts: |
+      - name: server
+        args:
+          - name: GITHUB_USER
+            value: ${{ github.repository_owner }}
+          - name: GITHUB_TOKEN
+            value: ${{ secrets.COMMON_TOKEN }}
+      - name: nginx
+        latest: true
+```
+
+### cache
+Можно использовать cache-from и cache-to
+
+```yaml
+- id: set-tags
+  run: |
+    commit_sha=${{ github.sha }}
+    commit_sha=${commit_sha:0:10}
+    time=`date +%Y%m%d%H%M`
+
+    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
+# nosemgrep
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: ${{ steps.set-tags.outputs.tag }}
+    operation: build-and-push
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
+    build-opts: |
+      - name: server
+        args:
+          - name: GITHUB_USER
+            value: ${{ github.repository_owner }}
+          - name: GITHUB_TOKEN
+            value: ${{ secrets.COMMON_TOKEN }}
+      - name: nginx
+```
+
+Если будет использоваться ghcr.io, то в случае нескольких образов latest тег будет запушен следующим образом: `ghcr.io/<org-name>/<repo-name>:<image-name>-latest`
+
+### образ = имени репозитория
+
+Чтобы пушить образ с именем репы без дополнительных постфиксов, то есть таким образом
+1. `<registry>/<repo-name>:<tag>`
+1. `ghcr.io/<org-name>/<repo-name>:<tag>`
+
+можно воспользоваться опцией `repo-image-name`
+
+```yaml
+- id: set-tags
+  run: |
+    commit_sha=${{ github.sha }}
+    commit_sha=${commit_sha:0:10}
+    time=`date +%Y%m%d%H%M`
+
+    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
+# nosemgrep
+- uses: orangeappsru/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: ${{ steps.set-tags.outputs.tag }}
+    operation: build-and-push
+    build-opts: |
+      - name: server
+        repo-image-name: true
+        args:
+          - name: GITHUB_USER
+            value: ${{ github.repository_owner }}
+          - name: GITHUB_TOKEN
+            value: ${{ secrets.COMMON_TOKEN }}
+      - name: nginx
+```
+
+Будут собраны образы
+
+1. `<registry>/<repo-name>:<tag>` - server
+1. `<registry>/<repo-name>/nginx:<tag>` - nginx
+
+
 ## Inputs
 
 ### `registry`
@@ -204,12 +404,23 @@ registry, указывать без протокола (например `exampl
 ### `operation`
 Может быть равен `build`, `push`, `build-and-push`. Если равен `build`, то будут собраны образы, но не запушены в registry. Если `push` то action будет просто пушить образы (ожидается что для указанного тега образы собраны). `build-and-push` сразу билдит образы и пушит их
 
+### `platforms`
+`default: ''`
+Список платформ которые будут подставляться в команду сборки через аргумент `--platform`. Платформы должны перичислены через запятую. Пример: `linux/amd64,linux/arm64`. Документация https://docs.docker.com/build/building/multi-platform/. Этот параметр может быть переопределен на уровне образа в `build-opts`.
+
+### `latest`
+`default: false`
+Пушить дополнительно latest тег или нет. Этот параметр может быть переопределен на уровне образа в `build-opts`.
+
 ### `build-opts`
 Принимает структуру данных в yaml формате следующего вида:
 ```yaml
 - name: <image1>
   target: t1
   file: ./docker/<image1>/Dockerfile
+  platforms: linux/amd64,linux/arm64
+  latest: false
+  repo-image-name: false
   args:
     - name: arg1
       value: val2
@@ -232,6 +443,9 @@ registry, указывать без протокола (например `exampl
 - name: <image2>:
   target: t1
   file: ./docker/<image2>/Dockerfile
+  platforms: linux/amd64,linux/arm64
+  latest: false
+  repo-image-name: false
   args:
     - name: arg1
       value: val2
@@ -264,7 +478,9 @@ registry, указывать без протокола (например `exampl
 * `file` (опционально) - если указано то в `--file` подставляется значение из этого поля
 * `envs` (опционально) - создает указанные переменные среды перед запуском сборки, полезно при использовании совместно с `secrets`
 * `secrets` (опционально) - добавляет аргументы `--secret`. Подробнее смотрите в докумнтации docker: https://docs.docker.com/build/building/secrets/
-
+* `platforms` (опционально) - добавляет в аргументы сборки `--platform platforms`. Платформы должны перичислены через запятую. Пример: `linux/amd64,linux/arm64`. Документация https://docs.docker.com/build/building/multi-platform/
+* `latest` (опционально) - пушить дополнительно latest тег или нет
+* `repo-image-name` (опциноально) - пушит образ под именем репозитория
 
 ## Outputs 
 

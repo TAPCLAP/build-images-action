@@ -10,9 +10,30 @@ inputs:
   tag:
     description: 'image tag'
     required: true
+  platforms:
+    description: 'platforms'
+    required: false
+    default: ''
   operation:
     description: '<push|build|build-and-push>'
     required: true
+  latest:
+    description: 'latest tag'
+    required: false
+    default: 'false'
+  cache-from:
+    description: 'cache from https://docs.docker.com/build/ci/github-actions/cache/'
+    required: false
+    default: ''
+  cache-to:
+    description: 'cache from https://docs.docker.com/build/ci/github-actions/cache/'
+    required: false
+    default: ''
+  github-token: 
+    description: 'github token'
+    required: false
+    default: ''
+
 outputs:
   copy-files:
     description: 'copy files'

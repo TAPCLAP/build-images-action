@@ -13,12 +13,32 @@ inputs:
   registry-password: 
     description: "registry's password"
     required: true
+  platforms:
+    description: 'platforms'
+    required: false
+    default: ''
   tag:
     description: 'image tag'
     required: true
   operation:
     description: '<push|build|build-and-push>'
     required: true
+  latest:
+    description: 'latest tag'
+    required: false
+    default: 'false'
+  cache-from:
+    description: 'cache from https://docs.docker.com/build/ci/github-actions/cache/'
+    required: false
+    default: ''
+  cache-to:
+    description: 'cache from https://docs.docker.com/build/ci/github-actions/cache/'
+    required: false
+    default: ''
+  github-token: 
+    description: 'github token'
+    required: false
+    default: ''
 outputs:
   copy-files:
     description: 'copy files'
@@ -36,6 +56,17 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up Docker Buildx
+      # nosemgrep
+      uses: docker/setup-buildx-action@master
+      if: inputs.cache-from != '' || inputs.cache-to != ''
+    - name: Set up Docker Buildx
+      # nosemgrep
+      uses: docker/setup-buildx-action@master
+      if: inputs.platforms != ''
+      with: 
+        platforms: ${{ inputs.platforms }}
+
     - name: Login to registry
       # nosemgrep
       uses: docker/login-action@v3
@@ -51,3 +82,8 @@ runs:
         registry: ${{ inputs.registry }}
         tag: ${{ inputs.tag }}
         operation: ${{ inputs.operation }}
+        platforms: ${{ inputs.platforms }}
+        github-token: ${{ inputs.github-token }}
+        latest: ${{ inputs.latest }}
+        cache-from: ${{ inputs.cache-from }}
+        cache-to: ${{ inputs.cache-to }}
