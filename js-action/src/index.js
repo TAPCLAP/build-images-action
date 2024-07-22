@@ -195,6 +195,7 @@ async function main() {
       ];
 
       if (resultLatest) {
+        commands['push'].push(`docker tag ${pushImage} ${pushImageLatest}`);
         commands['push'].push(`docker push ${pushImageLatest}`);
       }
 
