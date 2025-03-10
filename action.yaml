@@ -75,7 +75,7 @@ runs:
         username: ${{ inputs.registry-user }}
         password: ${{ inputs.registry-password }}
     - name: images
-      uses: orangeappsru/build-images-action/js-action@main
+      uses: tapclap/build-images-action/js-action@main
       id: images
       with:
         build-opts: ${{ inputs.build-opts }}

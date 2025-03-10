@@ -22,7 +22,7 @@ Dockerfile'ы должны находится в одноименных папк
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -50,7 +50,7 @@ Dockerfile'ы должны находится в одноименных папк
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ghcr.io
@@ -83,7 +83,7 @@ Dockerfile'ы должны находится в одноименных папк
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -110,7 +110,7 @@ Dockerfile'ы должны находится в одноименных папк
     done
 
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: push-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -131,7 +131,7 @@ Dockerfile'ы должны находится в одноименных папк
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -151,7 +151,7 @@ Dockerfile'ы должны находится в одноименных папк
 ### Если нужно запустить собранный контенйер после билда
 Action возвращает output `built-images`, который можно использовать для запуска только что собранных контейнеров:
 ```yaml
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -173,7 +173,7 @@ Action возвращает output `built-images`, который можно и�
 
 docker secrets поддерживает возможность передавать секреты через енвы, поэтому  предусмотрено поле `envs`, которое позволяет создать перменные среды перед запуском `docker build` чтобы прокинуть их в секреты `type=env`
 ```yaml
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   name: build native
   id: build-images
   with:
@@ -222,7 +222,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 ### Указываем несколько платформ для билда
 указываем `platforms` для сборки всех образов
 ```yaml
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -237,7 +237,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
 указываем `platforms` для определенного образа
 ```yaml
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -263,7 +263,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -292,7 +292,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -323,7 +323,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -362,7 +362,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
     echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
-- uses: orangeappsru/build-images-action@main
+- uses: tapclap/build-images-action@main
   id: build-images
   with:
     registry: ${{ vars.REGISTRY }}
@@ -497,7 +497,7 @@ registry, указывать без протокола (например `exampl
 Собранные образы в JSON формате: `{"image1": "example.com/registry/image1:tag", "image2": "example.com/registry/image2:tag", ...}`
 Это удобно использовать если далее в пайплайне потребуется запустить контейнер из собранного образа
 ```yaml
-      - uses: orangeappsru/build-images-action@main
+      - uses: tapclap/build-images-action@main
         id: build-images
         with:
           registry: ${{ vars.REGISTRY }}
