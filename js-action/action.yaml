@@ -33,6 +33,10 @@ inputs:
     description: 'github token'
     required: false
     default: ''
+  repo-name:
+    description: 'override repo name'
+    required: false
+    default: ''
 
 outputs:
   copy-files:
