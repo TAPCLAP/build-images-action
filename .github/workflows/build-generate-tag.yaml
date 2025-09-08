@@ -1,0 +1,47 @@
+name: build-generate-tag-action
+concurrency:
+  group: build-generate-tag-action
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - generate-tag/src/**/*
+      - generate-tag/package*.json
+      - generate-tag/*.js
+      - .github/workflows/build-generate-tag.yaml
+
+permissions:
+  contents: write
+
+env:
+  AUTHOR_EMAIL: admin+github-actions@tapclap.com
+  AUTHOR_NAME: 'Github Actions'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: 20
+
+      - name: node modules
+        working-directory: ./generate-tag
+        run: npm ci
+
+      - name: build
+        working-directory: ./generate-tag
+        run: npm run build
+
+      - name: commit builded action
+        run: |
+          if git status | grep 'generate-tag/dist/' -q;
+          then
+            git config --global user.email "${AUTHOR_EMAIL}"
+            git config --global user.name "${AUTHOR_NAME}"
+            git add ./generate-tag/dist
+            git commit -m "build generate-tag action"
+            git push origin ${{ github.ref }}:${{ github.ref }}   
+          fi

@@ -1,0 +1,17 @@
+name: 'generate-tag'
+description: 'generate tag from template and params'
+inputs:
+  template: 
+    description: 'template for generating tag'
+    required: true
+  params: 
+    description: 'params in YAML/JSON format (see README.md)'
+    required: true
+
+outputs:
+  result:
+    description: 'result of render template string'
+
+runs:
+  using: 'node20'
+  main: 'dist/main.js'
