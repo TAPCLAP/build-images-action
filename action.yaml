@@ -27,6 +27,10 @@ inputs:
     description: 'latest tag'
     required: false
     default: 'false'
+  repo-name:
+    description: 'override repo name'
+    required: false
+    default: ''
   cache-from:
     description: 'cache from https://docs.docker.com/build/ci/github-actions/cache/'
     required: false
@@ -87,3 +91,4 @@ runs:
         latest: ${{ inputs.latest }}
         cache-from: ${{ inputs.cache-from }}
         cache-to: ${{ inputs.cache-to }}
+        repo-name: ${{ inputs.repo-name }}

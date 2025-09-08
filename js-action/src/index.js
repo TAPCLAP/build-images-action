@@ -19,11 +19,17 @@ async function main() {
     const platforms       = core.getInput('platforms');
     const cacheFrom       = core.getInput('cache-from');
     const cacheTo         = core.getInput('cache-to');
-    const repoName        = context.payload.repository.name.toLowerCase();
+    let   repoName        = core.getInput('repo-name');
     const org             = context.payload.repository.owner.login.toLowerCase();
     const buildOpts       = yamlParse(core.getInput('build-opts'));
     const githubRegistry  = 'ghcr.io';
 
+    const defaultRepoName = context.payload.repository.name.toLowerCase();
+
+    if (repoName === '') {
+      repoName = defaultRepoName;
+    }
+    repoName = repoName.toLowerCase();
 
     if (!isMainThread) {
       // Worker треды:
@@ -59,10 +65,10 @@ async function main() {
       let prePushImage    = `${registry}/${repoName}/${image.name}:${prePushImageTag}`;
 
       if (registry == githubRegistry) {
-        buildImage      = `${registry}/${org}/${repoName}:${image.name}-${buildTag}`;
-        pushImage       = `${registry}/${org}/${repoName}:${image.name}-${tag}`;
-        pushImageLatest = `${registry}/${org}/${repoName}:${image.name}-latest`;
-        prePushImage    = `${registry}/${org}/${repoName}:${image.name}-${prePushImageTag}`;
+        buildImage      = `${registry}/${org}/${defaultRepoName}:${image.name}-${buildTag}`;
+        pushImage       = `${registry}/${org}/${defaultRepoName}:${image.name}-${tag}`;
+        pushImageLatest = `${registry}/${org}/${defaultRepoName}:${image.name}-latest`;
+        prePushImage    = `${registry}/${org}/${defaultRepoName}:${image.name}-${prePushImageTag}`;
         prePushImageTag = `${image.name}-${prePushImageTag}`;
       }
 
@@ -73,10 +79,10 @@ async function main() {
         prePushImage    = `${registry}/${repoName}:${prePushImageTag}`;
 
         if (registry == githubRegistry) {
-          buildImage      = `${registry}/${org}/${repoName}:${buildTag}`;
-          pushImage       = `${registry}/${org}/${repoName}:${tag}`;
-          pushImageLatest = `${registry}/${org}/${repoName}:latest`;
-          prePushImage    = `${registry}/${org}/${repoName}:${prePushImageTag}`;
+          buildImage      = `${registry}/${org}/${defaultRepoName}:${buildTag}`;
+          pushImage       = `${registry}/${org}/${defaultRepoName}:${tag}`;
+          pushImageLatest = `${registry}/${org}/${defaultRepoName}:latest`;
+          prePushImage    = `${registry}/${org}/${defaultRepoName}:${prePushImageTag}`;
         }
       }
 
