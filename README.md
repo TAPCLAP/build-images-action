@@ -347,11 +347,27 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     repo-name: override/repo-name
     build-opts: |
       - name: server
-
 ```
 В результате будет сформировано такое имя: ``<registry>/override/repo-name/server:latest`
 
 В случае использования стандартного registry `ghcr.io` эта опция не на что не влияет. `repo-name` будет равен имени репозитория.
+
+Параметр поддерживает небольшую шаблоинзацию:
+```yaml
+- uses: tapclap/build-images-action@main
+  id: build-images
+  with:
+    registry: ${{ vars.REGISTRY }}
+    registry-user: ${{ secrets.REGISTRY_USER }}
+    registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+    tag: latest
+    operation: build-and-push
+    repo-name: '{{ repo }}/override'
+    build-opts: |
+      - name: server
+```
+
+В результате будет сформировано такое имя: ``<registry>/repo-name/override/server:latest`
 
 
 ## Inputs
@@ -388,7 +404,11 @@ registry, указывать без протокола (например `exampl
 
 ### `repo-name`
 `default: ''`
-Перезаписывает часть имени образа куда подставляется имя репозитория: `<registry>/<override-repo-name>/<image-name>:<tag>`. В случае использования стандартного registry `ghcr.io` эта опция не на что не влияет. `repo-name` будет равен имени репозитория.
+Перезаписывает часть имени образа куда подставляется имя репозитория: `<registry>/<repo-name>/<image-name>:<tag>`. Если указать эту опцию то будет заменена часть `<repo-name>`. Поддерживается небольшая шаблонизация:
+
+1. `{{ repo }}` - имя текущего репозитория (без owner'а или организации)
+
+В случае использования стандартного registry `ghcr.io` эта опция не на что не влияет. `repo-name` будет равен имени репозитория.
 
 
 ### `build-opts`
