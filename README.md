@@ -182,12 +182,10 @@ docker secrets поддерживает возможность передава�
 
 ```dockerfile
 RUN --mount=type=secret,id=ANDROID_KEYSTORE \
-    --mount=type=secret,id=ANDROID_KEYSTORE_PASSWORD \
-    --mount=type=secret,id=ANDROID_KEYSTORE_ALIAS \
+    --mount=type=secret,id=ANDROID_KEYSTORE_PASSWORD,env=ANDROID_KEYSTORE_PASSWORD \
+    --mount=type=secret,id=ANDROID_KEYSTORE_ALIAS,env=ANDROID_KEYSTORE_ALIAS \
     --mount=type=secret,id=SUPPLY_JSON_KEY \
        export ANDROID_KEYSTORE=/run/secrets/ANDROID_KEYSTORE \
-    && export ANDROID_KEYSTORE_PASSWORD=$(cat /run/secrets/ANDROID_KEYSTORE_PASSWORD) \
-    && export ANDROID_KEYSTORE_ALIAS=$(cat /run/secrets/ANDROID_KEYSTORE_ALIAS) \
     && export SUPPLY_JSON_KEY=/run/secrets/SUPPLY_JSON_KEY \
     make build
 ```
