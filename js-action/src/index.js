@@ -6,7 +6,7 @@ import * as path from 'path';
 import { Worker, isMainThread, workerData } from 'worker_threads';
 
 // import {Util} from '@docker/actions-toolkit/lib/util';
-import {generateRandomString, runCommand, createDir, getCurrentUtcTimestamp, normalizeRefName} from './lib.js';
+import {generateRandomString, runCommand, createDir, template} from './lib.js';
 
 
 async function main() {
@@ -28,8 +28,7 @@ async function main() {
     const githubRegistry  = 'ghcr.io';
 
     const defaultRepoName = context.payload.repository.name.toLowerCase();
-    const shortCommit     = context.sha.slice(0, 10);
-    const refName         = normalizeRefName(context.ref);
+
 
 
     if (repoName === '' || registry == githubRegistry) {
@@ -52,10 +51,8 @@ async function main() {
       resultTag = ciTag;
       operation = 'build';
     }
-    resultTag = resultTag.replaceAll("{{ commit }}", shortCommit);
-    resultTag = resultTag.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
-    resultTag = resultTag.replaceAll("{{ ref }}", refName);
 
+    resultTag = template(resultTag);
 
     core.setOutput('build-opts', core.getInput('build-opts'));
     console.log(`buildOpts: ${JSON.stringify(buildOpts, null, 2)}`);
@@ -125,7 +122,8 @@ async function main() {
       let args = '';
       if ('args' in image) {
         args = image.args.reduce((a,v) => {
-          return a + ' --build-arg ' + v.name + '=' + "'" + v.value + "'";
+          const value = template(v.value);
+          return a + ' --build-arg ' + v.name + '=' + "'" + value + "'";
         }, '');
       }
 
