@@ -61,6 +61,26 @@ async function makeRequest(url, options) {
   }
   return r;
 }
+
+export function getCurrentUtcTimestamp() {
+  const now = new Date();
+
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0'); // месяцы с 0
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  const hours = String(now.getUTCHours()).padStart(2, '0');
+  const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
+export function normalizeRefName(str) {
+  if (str.includes('/')) {
+    const parts = str.split('/');
+    return parts.pop(); 
+  }
+  return str;
+}
   
 // export async function ghcrDeleteVersion(org, repo, token, version) {
 //   const url = `https://api.github.com/orgs/${org}/packages/container/${repo}/versions`;

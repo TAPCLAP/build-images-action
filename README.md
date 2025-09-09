@@ -14,13 +14,6 @@ Dockerfile'ы должны находится в одноименных папк
 Также образу `server` нужно передать аргументы `GITHUB_USER` и `GITHUB_TOKEN`. Имена результирующих образов будут сформированы по следующему принципу: `<registry>/<repo-name>/<image-name>:<tag>`, где `<repo-name>` - имя репозитория в нижнем регистре.
 
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -28,7 +21,7 @@ Dockerfile'ы должны находится в одноименных папк
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     build-opts: |
       - name: server
@@ -40,15 +33,10 @@ Dockerfile'ы должны находится в одноименных папк
       - name: nginx
 ```
 
+В поле tag поддерживается небольшая шаблонизация ([подробности](#tag))
+
 Если в качестве registry будет передан ghcr.io, то имена образов будут формироваться по следующему принципу: `ghcr.io/<org-name>/<repo-name>:<image-name>-<tag>`:
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -56,7 +44,7 @@ Dockerfile'ы должны находится в одноименных папк
     registry: ghcr.io
     registry-user: ${{ github.repository_owner }}
     registry-password: ${{ secrets.GITHUB_TOKEN }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     build-opts: |
       - name: server
@@ -75,13 +63,6 @@ Dockerfile'ы должны находится в одноименных папк
 
 Бывает необходимо скопировать файл из собранного образа и выполнить какие-то с ним действия:
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -89,7 +70,7 @@ Dockerfile'ы должны находится в одноименных папк
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build
     build-opts: |
       - name: server
@@ -116,20 +97,13 @@ Dockerfile'ы должны находится в одноименных папк
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: push
     build-opts: ${{ steps.build-images.outputs.build-opts }}
 ```
 
 ### Сборка нескольких образов из одного Dockerfile но с разными target
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -137,7 +111,7 @@ Dockerfile'ы должны находится в одноименных папк
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     build-opts: |
       - name: php
@@ -180,7 +154,7 @@ docker secrets поддерживает возможность передава�
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ inputs.area }}-${{ github.ref_name }}
+    tag: ${{ inputs.area }}-{{ ref }}
     operation: build
     build-opts: |
       - name: android
@@ -255,13 +229,6 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 Иногда хочется помимо указанного тега сделать так чтобы пушился ещё latest тег. Для этого просто добавляем параметр `latest: true`
 
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -269,7 +236,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     latest: true
     build-opts: |
@@ -284,13 +251,6 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 
 Тоже самое можно делать на уровне образа в `build-opts`
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -298,7 +258,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     build-opts: |
       - name: server
@@ -315,13 +275,6 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 Можно использовать cache-from и cache-to
 
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -329,7 +282,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     cache-from: type=gha
     cache-to: type=gha,mode=max
@@ -354,13 +307,6 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 можно воспользоваться опцией `repo-image-name`
 
 ```yaml
-- id: set-tags
-  run: |
-    commit_sha=${{ github.sha }}
-    commit_sha=${commit_sha:0:10}
-    time=`date +%Y%m%d%H%M`
-
-    echo "tag=${{ inputs.area }}-${{ inputs.platform }}-${time}-${{ github.ref_name }}-${commit_sha}" >> $GITHUB_OUTPUT
 # nosemgrep
 - uses: tapclap/build-images-action@main
   id: build-images
@@ -368,7 +314,7 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     registry: ${{ vars.REGISTRY }}
     registry-user: ${{ secrets.REGISTRY_USER }}
     registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    tag: ${{ steps.set-tags.outputs.tag }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
     operation: build-and-push
     build-opts: |
       - name: server
@@ -420,7 +366,14 @@ registry, указывать без протокола (например `exampl
 Пароль для аутентификации в reigstry
 
 ### `tag`
-Тег образов
+Тег образов. Поддерживает небольшую шаблонизацию:
+
+1. `{{ commit }}` -  short sha коммита
+1. `{{ dateTime }}` - дата и время в UTC в формате `YYYYMMDDhhmm` 
+1. `{{ ref }}` - имя ветки или тега (без refs/heads)
+
+Пример: `tag: '${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}'`
+
 
 ### `operation`
 Может быть равен `build`, `push`, `build-and-push`. Если равен `build`, то будут собраны образы, но не запушены в registry. Если `push` то action будет просто пушить образы (ожидается что для указанного тега образы собраны). `build-and-push` сразу билдит образы и пушит их

@@ -43,6 +43,7 @@ inputs:
     description: 'github token'
     required: false
     default: ''
+
 outputs:
   copy-files:
     description: 'copy files'
