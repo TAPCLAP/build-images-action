@@ -11,7 +11,7 @@ Dockerfile'ы должны находится в одноименных папк
 ./docker/server/Dockerfile
 ./docker/nginx/Dockerfile
 ```
-Также образу `server` нужно передать аргументы `GITHUB_USER` и `GITHUB_TOKEN`. Имена результирующих образов будут сформированы по следующему принципу: `<registry>/<repo-name>/<image-name>:<tag>`, где `<repo-name>` - имя репозитория в нижнем регистре.
+Также образу `server` нужно передать аргументы `PLATFORM` и `ENV`. Имена результирующих образов будут сформированы по следующему принципу: `<registry>/<repo-name>/<image-name>:<tag>`, где `<repo-name>` - имя репозитория в нижнем регистре.
 
 ```yaml
 # nosemgrep
@@ -26,10 +26,10 @@ Dockerfile'ы должны находится в одноименных папк
     build-opts: |
       - name: server
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
 ```
 
@@ -49,10 +49,10 @@ Dockerfile'ы должны находится в одноименных папк
     build-opts: |
       - name: server
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
 ```
 Будут собраны образы:  
@@ -76,10 +76,10 @@ Dockerfile'ы должны находится в одноименных папк
       - name: server
         copy-files: ['/app/junit.xml']
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx-server
 
 - name: check copy files
@@ -146,6 +146,35 @@ Action возвращает output `built-images`, который можно и�
 Если хотим использовать функцию https://docs.docker.com/build/building/secrets/, то нужно передать поле `secrets`
 
 docker secrets поддерживает возможность передавать секреты через енвы, поэтому  предусмотрено поле `envs`, которое позволяет создать перменные среды перед запуском `docker build` чтобы прокинуть их в секреты `type=env`
+```yaml
+# nosemgrep
+- uses: tapclap/build-images-action@main
+  id: build-images
+  with:
+    registry: ghcr.io
+    registry-user: ${{ github.repository_owner }}
+    registry-password: ${{ secrets.GITHUB_TOKEN }}
+    tag: ${{ inputs.area }}-{{ dateTime }}-{{ ref }}-{{ commit }}
+    operation: build-and-push
+    build-opts: |
+      - name: server
+        envs:
+        - name: GITHUB_USER
+          value: ${{ github.repository_owner }}
+        - name: GITHUB_TOKEN
+          value: ${{ secrets.COMMON_TOKEN }}
+        secrets:
+        - id=GITHUB_USER,type=env,env=GITHUB_USER
+        - id=GITHUB_TOKEN,type=env,env=GITHUB_TOKEN
+```
+
+```dockerfile
+RUN --mount=type=secret,id=GITHUB_USER,env=GITHUB_USER \
+    --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+    make build
+```
+Второй пример
+
 ```yaml
 - uses: tapclap/build-images-action@main
   name: build native
@@ -240,10 +269,10 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     build-opts: |
       - name: server
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
 ```
 
@@ -261,10 +290,10 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     build-opts: |
       - name: server
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
         latest: true
 ```
@@ -287,10 +316,10 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
     build-opts: |
       - name: server
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
 ```
 
@@ -318,10 +347,10 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
       - name: server
         repo-image-name: true
         args:
-          - name: GITHUB_USER
-            value: ${{ github.repository_owner }}
-          - name: GITHUB_TOKEN
-            value: ${{ secrets.COMMON_TOKEN }}
+          - name: PLATFORM
+            value: ${{ inputs.platform }}
+          - name: ENV
+            value: ${{ inputs.env }}
       - name: nginx
 ```
 
