@@ -397,6 +397,97 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 В результате будет сформировано такое имя: ``<registry>/repo-name/override/server:latest`
 
 
+### CI
+
+Часто возникает задача просто собрать образы для проверок в CI. Их обычно пушить не требуется и также какие-то особые теги выставлять не нужно. Поэтому приходится добавлять логику в workflow для разных режимов его запска, и указывать разные теги в зависимости от входных параметров. Например:
+
+```yaml
+    - name: vars
+      id: vars
+      run: |
+        set -x
+        commit_sha=${{ github.sha }}
+        commit_sha=${commit_sha:0:10}
+        echo "commit_sha=${commit_sha}" >> $GITHUB_OUTPUT
+        time=`date -u +%Y%m%d%H%M`
+
+        platform="${{ inputs.app_platform }}"
+        if [[ ${{ inputs.custom_tag_platform }} != 'default' ]]; then
+          platform="${{ inputs.custom_tag_platform }}"
+        fi
+
+        tag="${{ inputs.app_env }}-manual-${time}-${{ github.ref_name }}-${commit_sha}"
+        operation='build-and-push'
+
+        if [[ ${{ inputs.ci }} == "true" ]]; then
+          tag="${commit_sha}"
+          operation='build'
+        fi
+
+        echo "operation=${operation}" >> $GITHUB_OUTPUT
+        echo "tag=${tag}" >> $GITHUB_OUTPUT
+        echo "platform=${platform}" >> $GITHUB_OUTPUT
+
+
+    # nosemgrep
+    - uses: tapclap/build-images-action@main
+      id: build-images
+      with:
+        registry: ${{ vars.REGISTRY }}
+        registry-user: ${{ secrets.REGISTRY_USER }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        tag: ${{ steps.vars.outputs.tag }}
+        operation: ${{ steps.vars.outputs.operation }}
+        repo-name: '{{ repo }}/${{ steps.vars.outputs.platform }}'
+        build-opts: |
+          - name: server
+          - name: web
+          - name: remote
+          - name: fbinstant-deploy
+            args:
+              - name: AREA
+                value: ${{ inputs.app_env }}
+              - name: REF
+                value: ${{ github.ref_name }}
+```
+Но это можно упростить просто выставив параметр `ci` в `true`:
+
+```yaml
+    - name: vars
+      id: vars
+      run: |
+        set -x
+        platform="${{ inputs.app_platform }}"
+        if [[ ${{ inputs.custom_tag_platform }} != 'default' ]]; then
+          platform="${{ inputs.custom_tag_platform }}"
+        fi
+
+        echo "platform=${platform}" >> $GITHUB_OUTPUT
+
+    # nosemgrep
+    - uses: tapclap/build-images-action@main
+      id: build-images
+      with:
+        registry: ${{ vars.REGISTRY }}
+        registry-user: ${{ secrets.REGISTRY_USER }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        ci: ${{ inputs.ci }}
+        tag: '${{ inputs.app_env }}-manual-{{ dateTime }}-${{ ref }}-{{ commit }}'
+        operation: build-and-push
+        repo-name: '{{ repo }}/${{ steps.vars.outputs.platform }}'
+        build-opts: |
+          - name: server
+          - name: web
+          - name: remote
+          - name: fbinstant-deploy
+            args:
+              - name: AREA
+                value: ${{ inputs.app_env }}
+              - name: REF
+                value: ${{ github.ref_name }}
+```
+когда мы выставляем `ci` равным `true`, action не пушит образы (то есть operation считай что равен `build`), а tag будет равен short sha коммита. tag можно менять через опцию `ci-tag`.
+
 ## Inputs
 
 ### `registry`
@@ -436,6 +527,19 @@ registry, указывать без протокола (например `exampl
 1. `{{ repo }}` - имя текущего репозитория (без owner'а или организации)
 
 В случае использования стандартного registry `ghcr.io` эта опция не на что не влияет. `repo-name` будет равен имени репозитория.
+
+### `ci`
+`default: 'false'`
+Если равен `'true'`, `operation` принудительно выставляется в `build`, а tag выставляется в `ci-tag`
+
+### `ci-tag`
+`default: '{{ commit }}'`
+
+Используется вместо `tag` когда `ci` равен `true`. Поддерживает аналогичную шаблонизацию
+
+1. `{{ commit }}` -  short sha коммита
+1. `{{ dateTime }}` - дата и время в UTC в формате `YYYYMMDDhhmm` 
+1. `{{ ref }}` - имя ветки или тега (без refs/heads)
 
 
 ### `build-opts`

@@ -16,10 +16,12 @@ async function main() {
     const githubToken     = core.getInput('github-token');
     const tag             = core.getInput('tag');
     const latest          = core.getInput('latest');
-    const operation       = core.getInput('operation');
+    let operation         = core.getInput('operation');
     const platforms       = core.getInput('platforms');
     const cacheFrom       = core.getInput('cache-from');
     const cacheTo         = core.getInput('cache-to');
+    const ci              = core.getInput('ci');
+    const ciTag           = core.getInput('ci-tag');
     let   repoName        = core.getInput('repo-name');
     const org             = context.payload.repository.owner.login.toLowerCase();
     const buildOpts       = yamlParse(core.getInput('build-opts'));
@@ -29,11 +31,6 @@ async function main() {
     const shortCommit     = context.sha.slice(0, 10);
     const refName         = normalizeRefName(context.ref);
 
-
-    let resultTag = tag
-    resultTag = resultTag.replaceAll("{{ commit }}", shortCommit);
-    resultTag = resultTag.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
-    resultTag = resultTag.replaceAll("{{ ref }}", refName);
 
     if (repoName === '' || registry == githubRegistry) {
       repoName = defaultRepoName;
@@ -49,6 +46,16 @@ async function main() {
       }
       process.exit(0);
     }
+
+    let resultTag = tag
+    if (ci === 'true') {
+      resultTag = ciTag;
+      operation = 'build';
+    }
+    resultTag = resultTag.replaceAll("{{ commit }}", shortCommit);
+    resultTag = resultTag.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
+    resultTag = resultTag.replaceAll("{{ ref }}", refName);
+
 
     core.setOutput('build-opts', core.getInput('build-opts'));
     console.log(`buildOpts: ${JSON.stringify(buildOpts, null, 2)}`);
