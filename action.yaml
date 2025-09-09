@@ -23,6 +23,14 @@ inputs:
   operation:
     description: '<push|build|build-and-push>'
     required: true
+  ci:
+    description: 'only build with tmp tag'
+    required: false
+    default: 'false'
+  ci-tag:
+    description: 'tmp tag for ci build'
+    required: false
+    default: '{{ commit }}'
   latest:
     description: 'latest tag'
     required: false
@@ -87,6 +95,8 @@ runs:
         build-opts: ${{ inputs.build-opts }}
         registry: ${{ inputs.registry }}
         tag: ${{ inputs.tag }}
+        ci: ${{ inputs.ci }}
+        ci-tag: ${{ inputs.ci-tag }}
         operation: ${{ inputs.operation }}
         platforms: ${{ inputs.platforms }}
         github-token: ${{ inputs.github-token }}

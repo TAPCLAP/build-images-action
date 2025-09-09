@@ -37,6 +37,14 @@ inputs:
     description: 'override repo name'
     required: false
     default: ''
+  ci:
+    description: 'only build with tmp tag'
+    required: false
+    default: 'false'
+  ci-tag:
+    description: 'tmp tag for ci build'
+    required: false
+    default: '{{ commit }}'
     
 outputs:
   copy-files:
