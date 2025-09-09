@@ -488,6 +488,33 @@ RUN --mount=type=secret,id=ANDROID_KEYSTORE \
 ```
 когда мы выставляем `ci` равным `true`, action не пушит образы (то есть operation считай что равен `build`), а tag будет равен short sha коммита. tag можно менять через опцию `ci-tag`.
 
+### аргументы поддерживают шаблонизацию
+
+Также как и в тегах можно использовать шаблоны в аргументах сборки образа
+
+```yaml
+    # nosemgrep
+    - uses: tapclap/build-images-action@main
+      id: build-images
+      with:
+        registry: ${{ vars.REGISTRY }}
+        registry-user: ${{ secrets.REGISTRY_USER }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        tag: '${{ inputs.app_env }}-manual-{{ dateTime }}-${{ ref }}-{{ commit }}'
+        operation: build-and-push
+        build-opts: |
+          - name: fbinstant-deploy
+            args:
+              - name: AREA
+                value: ${{ inputs.app_env }}
+              - name: REF
+                value: '{{ ref }}'
+              - name: REF
+                value: '{{ commit }}'
+```
+
+
+
 ## Inputs
 
 ### `registry`
@@ -584,6 +611,10 @@ registry, указывать без протокола (например `exampl
     - ...
     - name: argn
       value: argn
+    - name: commit
+      value: '{{ commit }}'
+    - name: ref
+      value: '{{ ref }}'
   copy-files: ['path/to/file1', 'path/to/file2', ..., 'path/to/filen']
   envs:
     - name: VAR1
@@ -602,7 +633,7 @@ registry, указывать без протокола (например `exampl
 
 * `name` - образ который требуется собрать. 
 
-* `args` (опционально) - список аргументов  
+* `args` (опционально) - список аргументов. Поддерживает шаблонизацию как в тегах ([подробности](#tag))
 * `copy-files` (опционально) - файлы которые требуется скопировать из образа после сборки  
 * `target` (опционально) - если указано то добавляется `--target target-value` в команду сборки
 * `file` (опционально) - если указано то в `--file` подставляется значение из этого поля

@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import {existsSync, rmdirSync, mkdirSync} from 'fs';
+import * as github from '@actions/github'
 // import fetch from 'node-fetch';
 
 
@@ -80,6 +81,19 @@ export function normalizeRefName(str) {
     return parts.pop(); 
   }
   return str;
+}
+
+export function template(str) {
+  const context         = github.context;
+  const shortCommit     = context.sha.slice(0, 10);
+  const refName         = normalizeRefName(context.ref);
+
+  str = str.replaceAll("{{ commit }}", shortCommit);
+  str = str.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
+  str = str.replaceAll("{{ ref }}", refName);
+
+  return str;
+
 }
   
 // export async function ghcrDeleteVersion(org, repo, token, version) {
