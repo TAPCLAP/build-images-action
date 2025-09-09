@@ -35,10 +35,11 @@ async function main() {
     resultTag = resultTag.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
     resultTag = resultTag.replaceAll("{{ ref }}", refName);
 
-    if (repoName === '') {
+    if (repoName === '' || registry == githubRegistry) {
       repoName = defaultRepoName;
     }
     repoName = repoName.toLowerCase();
+    repoName = repoName.replaceAll('{{ repo }}', defaultRepoName);
 
     if (!isMainThread) {
       // Worker треды:
@@ -74,10 +75,10 @@ async function main() {
       let prePushImage    = `${registry}/${repoName}/${image.name}:${prePushImageTag}`;
 
       if (registry == githubRegistry) {
-        buildImage      = `${registry}/${org}/${defaultRepoName}:${image.name}-${buildTag}`;
-        pushImage       = `${registry}/${org}/${defaultRepoName}:${image.name}-${resultTag}`;
-        pushImageLatest = `${registry}/${org}/${defaultRepoName}:${image.name}-latest`;
-        prePushImage    = `${registry}/${org}/${defaultRepoName}:${image.name}-${prePushImageTag}`;
+        buildImage      = `${registry}/${org}/${repoName}:${image.name}-${buildTag}`;
+        pushImage       = `${registry}/${org}/${repoName}:${image.name}-${resultTag}`;
+        pushImageLatest = `${registry}/${org}/${repoName}:${image.name}-latest`;
+        prePushImage    = `${registry}/${org}/${repoName}:${image.name}-${prePushImageTag}`;
         prePushImageTag = `${image.name}-${prePushImageTag}`;
       }
 
@@ -88,10 +89,10 @@ async function main() {
         prePushImage    = `${registry}/${repoName}:${prePushImageTag}`;
 
         if (registry == githubRegistry) {
-          buildImage      = `${registry}/${org}/${defaultRepoName}:${buildTag}`;
-          pushImage       = `${registry}/${org}/${defaultRepoName}:${resultTag}`;
-          pushImageLatest = `${registry}/${org}/${defaultRepoName}:latest`;
-          prePushImage    = `${registry}/${org}/${defaultRepoName}:${prePushImageTag}`;
+          buildImage      = `${registry}/${org}/${repoName}:${buildTag}`;
+          pushImage       = `${registry}/${org}/${repoName}:${resultTag}`;
+          pushImageLatest = `${registry}/${org}/${repoName}:latest`;
+          prePushImage    = `${registry}/${org}/${repoName}:${prePushImageTag}`;
         }
       }
 
