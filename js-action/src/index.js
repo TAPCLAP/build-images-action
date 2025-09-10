@@ -29,7 +29,10 @@ async function main() {
 
     const defaultRepoName = context.payload.repository.name.toLowerCase();
 
-
+    if (core.isDebug()) {
+      console.log('### DEBUG GitHub context ###');
+      console.log(JSON.stringify(github, null, 2));
+    }
 
     if (repoName === '' || registry == githubRegistry) {
       repoName = defaultRepoName;

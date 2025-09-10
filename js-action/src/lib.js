@@ -92,9 +92,15 @@ export function template(str) {
     str = String(str); 
   }
 
+  let pr = 'manual'
+  if (context.eventName === 'pull_request') {
+    pr = context.payload.pull_request.number
+  }
+
   str = str.replaceAll("{{ commit }}", shortCommit);
   str = str.replaceAll("{{ dateTime }}", getCurrentUtcTimestamp());
   str = str.replaceAll("{{ ref }}", refName);
+  str = str.replaceAll("{{ pr }}", pr);
 
   return str;
 
