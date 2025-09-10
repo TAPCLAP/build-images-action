@@ -84,17 +84,18 @@ export function normalizeRefName(str) {
 }
 
 export function template(str) {
-  const context         = github.context;
-  const shortCommit     = context.sha.slice(0, 10);
-  const refName         = normalizeRefName(context.ref);
+  const context     = github.context;
+  const shortCommit = context.sha.slice(0, 10);
+  let refName       = normalizeRefName(context.ref);
   
   if (typeof str !== "string") {
     str = String(str); 
   }
 
-  let pr = 'manual'
+  let pr = 'manual';
   if (context.eventName === 'pull_request') {
-    pr = context.payload.pull_request.number
+    pr = context.payload.pull_request.number;
+    refName = context.payload.pull_request.head.ref;
   }
 
   str = str.replaceAll("{{ commit }}", shortCommit);
