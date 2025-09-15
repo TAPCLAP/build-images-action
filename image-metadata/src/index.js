@@ -20,6 +20,8 @@ async function main() {
     if (repoName === '') {
       repoName = defaultRepoName;
     }
+    repoName = repoName.toLowerCase();
+    repoName = repoName.replaceAll('{{ repo }}', defaultRepoName);
 
     let labels = {};
     let metadata = {};

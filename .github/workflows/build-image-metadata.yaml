@@ -42,5 +42,14 @@ jobs:
             git config --global user.name "${AUTHOR_NAME}"
             git add ./image-metadata/dist
             git commit -m "built action image-metadata"
-            git push origin ${{ github.ref }}:${{ github.ref }}   
+            while true; do
+              if ! git push origin ${{ github.ref }}:${{ github.ref }}; then
+                echo "Push failed, sleep 10 seconds and retrying..."
+                git pull --rebase
+                sleep 10
+                continue
+              else
+                break
+              fi
+            done
           fi

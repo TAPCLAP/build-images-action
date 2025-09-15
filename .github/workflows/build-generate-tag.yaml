@@ -43,5 +43,14 @@ jobs:
             git config --global user.name "${AUTHOR_NAME}"
             git add ./generate-tag/dist
             git commit -m "build generate-tag action"
-            git push origin ${{ github.ref }}:${{ github.ref }}   
+            while true; do
+              if ! git push origin ${{ github.ref }}:${{ github.ref }}; then
+                echo "Push failed, sleep 10 seconds and retrying..."
+                git pull --rebase
+                sleep 10
+                continue
+              else
+                break
+              fi
+            done
           fi
