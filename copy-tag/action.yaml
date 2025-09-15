@@ -10,6 +10,10 @@ inputs:
   registry-password: 
     description: 'registry'
     required: true
+  repo-name:
+    description: 'override repo name'
+    required: false
+    default: ''
   from-tag:
     description: 'from tag'
     required: true

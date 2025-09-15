@@ -8,7 +8,7 @@ import {copyTag} from './lib.js';
 async function main() {
   try {
     const context  = github.context;
-    const repoName = context.payload.repository.name.toLowerCase();
+    const defaultRepoName = context.payload.repository.name.toLowerCase();
 
     const registry         = core.getInput('registry');
     const registryUser     = core.getInput('registry-user');
@@ -16,6 +16,11 @@ async function main() {
     const fromTag          = core.getInput('from-tag');
     const toTag            = core.getInput('to-tag');
     const images           = yamlParse(core.getInput('images'));
+    let   repoName         = core.getInput('repo-name');
+
+    if (repoName === '') {
+      repoName = defaultRepoName;
+    }
     
     let pushImages = [];
 

@@ -13,9 +13,14 @@ inputs:
   tag:
     description: 'tag'
     required: true
+  repo-name:
+    description: 'override repo name'
+    required: false
+    default: ''
   images:
-    description: 'list images in Yaml format'
+    description: 'list images in Yaml/JSON format'
     required: true
+
 outputs:
   metadata:
     description: 'metadata'
