@@ -20,6 +20,10 @@ inputs:
   tag:
     description: 'image tag'
     required: true
+  tag-on-git-tag:
+    description: 'image tag when build is triggered by a git tag (supports same templates as tag)'
+    required: false
+    default: ''
   operation:
     description: '<push|build|build-and-push>'
     required: true
@@ -95,6 +99,7 @@ runs:
         build-opts: ${{ inputs.build-opts }}
         registry: ${{ inputs.registry }}
         tag: ${{ inputs.tag }}
+        tag-on-git-tag: ${{ inputs.tag-on-git-tag }}
         ci: ${{ inputs.ci }}
         ci-tag: ${{ inputs.ci-tag }}
         operation: ${{ inputs.operation }}

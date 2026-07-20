@@ -10,6 +10,10 @@ inputs:
   tag:
     description: 'image tag'
     required: true
+  tag-on-git-tag:
+    description: 'image tag when build is triggered by a git tag (supports same templates as tag)'
+    required: false
+    default: ''
   platforms:
     description: 'platforms'
     required: false

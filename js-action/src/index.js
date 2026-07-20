@@ -15,6 +15,7 @@ async function main() {
     const registry        = core.getInput('registry');
     const githubToken     = core.getInput('github-token');
     const tag             = core.getInput('tag');
+    const tagOnGitTag     = core.getInput('tag-on-git-tag');
     const latest          = core.getInput('latest');
     let operation         = core.getInput('operation');
     const platforms       = core.getInput('platforms');
@@ -26,6 +27,7 @@ async function main() {
     const org             = context.payload.repository.owner.login.toLowerCase();
     const buildOpts       = yamlParse(core.getInput('build-opts'));
     const githubRegistry  = 'ghcr.io';
+    const isGitTag        = context.ref.startsWith('refs/tags/');
 
     const defaultRepoName = context.payload.repository.name.toLowerCase();
 
@@ -53,6 +55,8 @@ async function main() {
     if (ci === 'true') {
       resultTag = ciTag;
       operation = 'build';
+    } else if (isGitTag && tagOnGitTag !== '') {
+      resultTag = tagOnGitTag;
     }
 
     resultTag = template(resultTag);
