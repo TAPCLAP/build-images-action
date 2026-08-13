@@ -14,6 +14,7 @@ async function main() {
     const registryUser     = core.getInput('registry-user');
     const registryPassword = core.getInput('registry-password');
     const tag              = core.getInput('tag');
+    const imagePlatform    = core.getInput('image-platform');
     const images           = yamlParse(core.getInput('images'));
     let   repoName         = core.getInput('repo-name');
 
@@ -30,7 +31,9 @@ async function main() {
       let url = `${registry}/${repoName}/${image}`;
       const { registryUrl, registryImage } = registryParse(url);
 
-      const m = await getMetadata(registryUrl, registryUser, registryPassword, registryImage, tag);
+      core.info(`Getting metadata for image: ${registryUrl}/${registryImage}:${tag}`);
+
+      const m = await getMetadata(registryUrl, registryUser, registryPassword, registryImage, tag, imagePlatform);
       metadata[image] = m;
       labels[image] = m.config.Labels;
     }

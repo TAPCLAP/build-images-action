@@ -40,7 +40,7 @@ async function main() {
           throw new Error(`Not valid format of url: "${url}". Error: ${e}`);
       }
       
-      copyTag(`${pUrl.origin}`, registryUser, registryPassword, `${pUrl.pathname.slice(1)}`, fromTag, toTag);
+      await copyTag(`${pUrl.origin}`, registryUser, registryPassword, `${pUrl.pathname.slice(1)}`, fromTag, toTag);
       pushImages.push(`${registry}/${repoName}/${image}:${toTag}`);
     }
 

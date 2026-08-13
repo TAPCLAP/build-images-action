@@ -17,6 +17,10 @@ inputs:
     description: 'override repo name'
     required: false
     default: ''
+  image-platform:
+    description: 'image platform'
+    required: false
+    default: 'linux/amd64'
   images:
     description: 'list images in Yaml/JSON format'
     required: true
