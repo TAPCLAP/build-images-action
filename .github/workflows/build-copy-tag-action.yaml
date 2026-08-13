@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
-          node-version: 20
+          node-version: 24
 
       - name: node modules
         working-directory: ./copy-tag
