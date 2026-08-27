@@ -49,6 +49,10 @@ inputs:
     description: 'tmp tag for ci build'
     required: false
     default: '{{ commit }}'
+  push-retries:
+    description: 'number of attempts for docker push on failure (exponential backoff: 2s, 4s, 8s, ... capped at 60s)'
+    required: false
+    default: '30'
     
 outputs:
   copy-files:

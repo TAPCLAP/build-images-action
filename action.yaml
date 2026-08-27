@@ -55,6 +55,10 @@ inputs:
     description: 'github token'
     required: false
     default: ''
+  push-retries:
+    description: 'number of attempts for docker push on failure (exponential backoff: 2s, 4s, 8s, ... capped at 60s)'
+    required: false
+    default: '30'
 
 outputs:
   copy-files:
@@ -109,3 +113,4 @@ runs:
         cache-from: ${{ inputs.cache-from }}
         cache-to: ${{ inputs.cache-to }}
         repo-name: ${{ inputs.repo-name }}
+        push-retries: ${{ inputs.push-retries }}

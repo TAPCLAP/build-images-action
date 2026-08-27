@@ -6,7 +6,7 @@ import * as path from 'path';
 import { Worker, isMainThread, workerData } from 'worker_threads';
 
 // import {Util} from '@docker/actions-toolkit/lib/util';
-import {generateRandomString, runCommand, createDir, template} from './lib.js';
+import {generateRandomString, runCommand, createDir, template, parsePushRetries, runCommandsWithPushRetry} from './lib.js';
 
 
 async function main() {
@@ -24,6 +24,7 @@ async function main() {
     const ci              = core.getInput('ci');
     const ciTag           = core.getInput('ci-tag');
     let   repoName        = core.getInput('repo-name');
+    const pushRetries     = parsePushRetries(core.getInput('push-retries'));
     const org             = context.payload.repository.owner.login.toLowerCase();
     const buildOpts       = yamlParse(core.getInput('build-opts'));
     const githubRegistry  = 'ghcr.io';
@@ -45,9 +46,7 @@ async function main() {
     if (!isMainThread) {
       // Worker треды:
       const { image } = workerData;
-      for (const cmd of image.push) {
-        runCommand(cmd);
-      }
+      await runCommandsWithPushRetry(image.push, { retries: pushRetries, registry });
       process.exit(0);
     }
 
@@ -320,9 +319,7 @@ async function main() {
         allPushImages.push(image.tags.pushLatest);
         allPushImages.push(image.tags.prePush);
 
-        for (const cmd of image.prePush) {
-          runCommand(cmd);
-        }
+        await runCommandsWithPushRetry(image.prePush, { retries: pushRetries, registry });
       }
 
       // паралельно пушим итоговые теги (сам пуш описан в начале кода в блоке if (!isMainThread) {})
