@@ -43,8 +43,10 @@ export function getPushRetryDelayMs(
   failedAttemptIndex,
   initialDelayMs = DEFAULT_PUSH_RETRY_INITIAL_DELAY_MS,
   maxDelayMs = DEFAULT_PUSH_RETRY_MAX_DELAY_MS,
+  randomFn = Math.random,
 ) {
-  return Math.min(initialDelayMs * (2 ** failedAttemptIndex), maxDelayMs);
+  const exponentialDelayMs = Math.min(initialDelayMs * (2 ** failedAttemptIndex), maxDelayMs);
+  return Math.floor(randomFn() * exponentialDelayMs);
 }
 
 export function getRegistryHealthUrl(registry) {
@@ -92,6 +94,7 @@ export async function runCommandWithRetry(command, options = {}) {
     run = (cmd) => runCommand(cmd, false),
     checkRegistry = checkRegistryAvailable,
     sleepFn = sleep,
+    randomFn = Math.random,
     exitFn = (code) => process.exit(code),
   } = options;
 
@@ -114,8 +117,8 @@ export async function runCommandWithRetry(command, options = {}) {
       return false;
     }
 
-    const delayMs = getPushRetryDelayMs(attempt - 1, initialDelayMs, maxDelayMs);
-    console.log(`Waiting ${delayMs / 1000}s before push retry ${attempt + 1}/${retries}...`);
+    const delayMs = getPushRetryDelayMs(attempt - 1, initialDelayMs, maxDelayMs, randomFn);
+    console.log(`Waiting ${delayMs}ms before push retry ${attempt + 1}/${retries}...`);
     await sleepFn(delayMs);
   }
 

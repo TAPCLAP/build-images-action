@@ -27,14 +27,13 @@ test('isPushCommand detects docker push and buildx --push', () => {
   assert.equal(isPushCommand('docker buildx build --load --tag image:tag .'), false);
 });
 
-test('getPushRetryDelayMs grows exponentially and caps at 60s', () => {
-  assert.equal(getPushRetryDelayMs(0), 2000);
-  assert.equal(getPushRetryDelayMs(1), 4000);
-  assert.equal(getPushRetryDelayMs(2), 8000);
-  assert.equal(getPushRetryDelayMs(3), 16000);
-  assert.equal(getPushRetryDelayMs(4), 32000);
-  assert.equal(getPushRetryDelayMs(5), 60000);
-  assert.equal(getPushRetryDelayMs(10), 60000);
+test('getPushRetryDelayMs applies full jitter within exponential cap', () => {
+  assert.equal(getPushRetryDelayMs(0, 2000, 60_000, () => 0), 0);
+  assert.equal(getPushRetryDelayMs(0, 2000, 60_000, () => 0.5), 1000);
+  assert.equal(getPushRetryDelayMs(1, 2000, 60_000, () => 0.5), 2000);
+  assert.equal(getPushRetryDelayMs(2, 2000, 60_000, () => 0.5), 4000);
+  assert.equal(getPushRetryDelayMs(5, 2000, 60_000, () => 0.5), 30000);
+  assert.equal(getPushRetryDelayMs(10, 2000, 60_000, () => 0.999), 59940);
 });
 
 test('getRegistryHealthUrl uses host and /v2/', () => {
@@ -75,13 +74,14 @@ test('runCommandWithRetry retries with backoff until success', async () => {
     sleepFn: async (ms) => {
       delays.push(ms);
     },
+    randomFn: () => 0.5,
     exitFn: () => {
       throw new Error('should not exit');
     },
   });
 
   assert.equal(calls, 3);
-  assert.deepEqual(delays, [2000, 4000]);
+  assert.deepEqual(delays, [1000, 2000]);
   assert.equal(registryChecks.length, 3);
 });
 
